@@ -126,7 +126,7 @@ async function run() {
 
     app.get("/appointmentSpecialty", async (req, res) => {
       const query = {};
-      const result = await appointmentOptionCollection
+      const result = await serviceCollection
         .find(query)
         .project({ name: 1 })
         .toArray();
@@ -151,12 +151,24 @@ async function run() {
       res.send(result);
     });
 
-    app.get("/booking", async (req, res) => {
+    app.get("/booking", verifyJWT, async (req, res) => {
       const patient = req.query.patient;
+      const decodedEmail = req.decoded.email;
+
+      if (email !== decodedEmail) {
+        return res.status(403).send({ message: "forbidden access" });
+      }
+
       const query = { patient };
       const bookings = await bookingCollection.find(query).toArray();
-
       res.send(bookings);
+    });
+
+    app.get("/bookings/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const booking = await bookingCollection.findOne(query);
+      res.send(booking);
     });
 
     app.post("/booking", async (req, res) => {
