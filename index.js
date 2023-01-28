@@ -40,6 +40,25 @@ async function run() {
       const result = await cursor.toArray();
       res.send(result);
     });
+
+    app.get("/available", async (req, res) => {
+      const date = req.query.date || "May 19, 2022";
+
+      const services = await serviceCollection.find().toArray();
+
+      const query = { date: date };
+      const bookings = await bookingCollection.find(query).toArray();
+
+      services.forEach((service) => {
+        const serviceBookings = bookings.filter(
+          (b) => b.treatmentName === service.name
+        );
+        const booked = serviceBookings.map((s) => s.slot);
+        const available = service.slots.filter((s) => !booked.includes(s));
+        service.slots = available;
+      });
+      res.send(services);
+    });
   } finally {
   }
 }
