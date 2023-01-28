@@ -77,6 +77,14 @@ async function run() {
       res.send({ result, accessToken: token });
       res.send(result);
     });
+
+    app.get("/booking", async (req, res) => {
+      const patient = req.query.patient;
+      const query = { patient };
+      const bookings = await bookingCollection.find(query).toArray();
+
+      res.send(bookings);
+    });
   } finally {
   }
 }
