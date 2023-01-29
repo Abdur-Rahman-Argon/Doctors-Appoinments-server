@@ -9,6 +9,14 @@ const port = 5000;
 app.use(cors());
 app.use(express.json());
 
+const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.tv6nj.mongodb.net/myFirstDatabase?retryWrites=true&w=majority`;
+
+const client = new MongoClient(uri, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+  serverApi: ServerApiVersion.v1,
+});
+
 function verifyJWT(req, res, next) {
   const authHeader = req.headers.authorization;
   if (!authHeader) {
@@ -24,13 +32,37 @@ function verifyJWT(req, res, next) {
   });
 }
 
-const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.tv6nj.mongodb.net/myFirstDatabase?retryWrites=true&w=majority`;
+function sendBookingEmail(booking) {
+  const { email, treatment, appointmentDate, slot } = booking;
 
-const client = new MongoClient(uri, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-  serverApi: ServerApiVersion.v1,
-});
+  const auth = {
+    auth: {
+      api_key: process.env.EMAIL_SEND_KEY,
+      domain: process.env.EMAIL_SEND_DOMAIN,
+    },
+  };
+
+  const transporter = nodemailer.createTransport(mg(auth));
+
+  transporter.sendMail(
+    {
+      from: "abdurrahman.me7@gmail.com",
+      to: email || "abdurrahman.me7@gmail.com",
+      subject: `Your appointment for ${treatment} is confirmed`,
+      text: "Hello world!",
+      html: `
+        <h3>Your appointment is confirmed</h3>
+        <div>
+            <p>Your appointment for treatment: ${treatment}</p>
+            <p>Please visit us on ${appointmentDate} at ${slot}</p>
+            <p>Thanks from Doctors Portal.</p>
+        </div>
+        
+        `,
+    },
+    function (error, info) {}
+  );
+}
 
 async function run() {
   try {
